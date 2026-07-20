@@ -1,5 +1,13 @@
+import json
+import time
+
+from fastapi.responses import StreamingResponse
+
+from app.core.progress import progress_queue
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.api.invoice import router as invoice_router
+from app.api.router import api_router
 
 app = FastAPI(
     title="Ledger AI",
@@ -19,15 +27,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def root():
-    return {
-        "message": "Welcome to Ledger AI 🚀",
-        "status": "Backend is running",
-    }
+app.include_router(invoice_router)
+@app.get("/progress")
+def progress():
 
-@app.get("/health")
-def health():
-    return {
-        "status": "healthy",
-    }
+    def event_stream():
+
+        while True:
+
+            if not progress_queue.empty():
+
+                event = progress_queue.get()
+
+                yield f"data: {json.dumps(event)}\n\n"
+
+            time.sleep(0.1)
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+    )
