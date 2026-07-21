@@ -1,4 +1,13 @@
-from typing import TypedDict, List, Dict, Any
+from typing import TypedDict, List, Dict, Any, Literal, NotRequired
+
+
+class ClassificationResult(TypedDict):
+    is_invoice: bool
+    confidence: float
+    reason: str
+    detected_document_type: str
+    method: Literal["heuristic", "llm"]
+    matched_keywords: NotRequired[list[str]]
 
 
 class LedgerState(TypedDict):
@@ -7,6 +16,9 @@ class LedgerState(TypedDict):
 
     # OCR
     ocr_text: str
+
+    # Classification
+    classification: ClassificationResult
 
     # Header Extraction
     header_fields: Dict[str, Any]

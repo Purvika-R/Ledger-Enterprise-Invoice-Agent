@@ -4,6 +4,7 @@ import VendorMemoryCard from "./VendorMemoryCard";
 import ConfidenceCard from "./ConfidenceCard";
 import ValidationCard from "./ValidationCard";
 import ApprovalPanel from "./ApprovalPanel";
+import NotInvoiceCard from "./NotInvoiceCard";
 
 type FieldValidationResult = {
   valid: boolean;
@@ -21,6 +22,7 @@ type Props = {
   onHeaderFieldChange: (field: string, value: string) => void;
   onLineItemChange: (index: number, field: string, value: string) => void;
   onApprove: () => void;
+  onUploadAnother?: () => void;
 };
 
 const AGENTS = [
@@ -43,6 +45,7 @@ export default function StatusCard({
   onHeaderFieldChange,
   onLineItemChange,
   onApprove,
+  onUploadAnother,
 }: Props) {
 
   if (processing) {
@@ -90,6 +93,15 @@ export default function StatusCard({
       <div className="rounded-xl bg-white p-6 shadow">
         Waiting for invoice...
       </div>
+    );
+  }
+
+  if (data.success === false) {
+    return (
+      <NotInvoiceCard
+        classification={data.classification}
+        onUploadAnother={onUploadAnother}
+      />
     );
   }
 

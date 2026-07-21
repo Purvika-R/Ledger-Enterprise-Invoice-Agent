@@ -23,6 +23,7 @@ async def process_invoice(file: UploadFile = File(...)):
         {
             "image_path": file_path,
             "ocr_text": "",
+            "classification": {},
             "header_fields": {},
             "line_items": [],
             "vendor_memory": {},

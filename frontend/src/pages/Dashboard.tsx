@@ -77,6 +77,10 @@ export default function Dashboard() {
     setApproved(true);
   }
 
+  function handleUploadAnother() {
+    setInvoiceData(null);
+  }
+
   return (
     <div className="min-h-screen bg-slate-100">
       <Header />
@@ -102,6 +106,7 @@ export default function Dashboard() {
             onHeaderFieldChange={handleHeaderFieldChange}
             onLineItemChange={handleLineItemChange}
             onApprove={handleApprove}
+            onUploadAnother={handleUploadAnother}
           />
 
         </div>
