@@ -1,6 +1,6 @@
 import os
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 
@@ -22,3 +22,16 @@ def init_db():
     from app.db import models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
+    existing_columns = {column["name"] for column in inspect(engine).get_columns("invoices")}
+    migrations = {
+        "owner_id": "INTEGER",
+        "uploaded_by_id": "INTEGER",
+        "reviewed_by_id": "INTEGER",
+        "approved_by_id": "INTEGER",
+        "reviewed_at": "DATETIME",
+        "approved_at": "DATETIME",
+    }
+    with engine.begin() as connection:
+        for column, column_type in migrations.items():
+            if column not in existing_columns:
+                connection.execute(text(f"ALTER TABLE invoices ADD COLUMN {column} {column_type}"))

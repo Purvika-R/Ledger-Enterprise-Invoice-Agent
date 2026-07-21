@@ -6,12 +6,15 @@
         "invoice_count": 2
     },
     "CLICKTECH RETAIL PRIVATE LIMITED": {
-        "invoice_count": 9
+        "invoice_count": 11
     },
     "SV ELECTRONICS UMITED": {
         "invoice_count": 1
     },
     "ABC Inc.": {
         "invoice_count": 2
+    },
+    "Microsoft Corporation": {
+        "invoice_count": 1
     }
 }

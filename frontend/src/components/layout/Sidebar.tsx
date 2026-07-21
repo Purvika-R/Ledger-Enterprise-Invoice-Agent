@@ -1,0 +1,4 @@
+import { BarChart3, FileText, LayoutDashboard, Upload, Users } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+
+export default function Sidebar() { const { user } = useAuth(); const items = [[LayoutDashboard,"Dashboard"],[Upload,"Upload Invoice"],[FileText,"Invoice History"],...[user?.role === "admin" ? [[BarChart3,"Analytics"],[Users,"Users"]] : []]] as const; return <aside className="hidden w-64 border-r border-white/10 bg-slate-950 p-5 text-slate-300 lg:block"><div className="mb-10 text-xl font-bold text-white">✦ Ledger AI</div><nav className="space-y-2">{items.map(([Icon,label])=><button key={label} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-white/10 hover:text-white"><Icon size={18}/>{label}</button>)}</nav></aside>; }

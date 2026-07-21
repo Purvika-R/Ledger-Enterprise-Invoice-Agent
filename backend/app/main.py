@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.invoice import router as invoice_router
 from app.api.router import api_router
+from app.api.auth import router as auth_router
 from app.db.database import init_db
 
 app = FastAPI(
@@ -29,6 +30,7 @@ app.add_middleware(
 )
 
 app.include_router(invoice_router)
+app.include_router(auth_router)
 
 
 @app.on_event("startup")

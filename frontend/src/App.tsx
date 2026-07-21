@@ -1,21 +1,26 @@
 import { useState } from "react";
 
-import AnalyticsDashboard from "./pages/AnalyticsDashboard";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import Dashboard from "./pages/Dashboard";
-import InvoiceDetail from "./pages/InvoiceDetail";
-import InvoiceHistory from "./pages/InvoiceHistory";
 
-type Page = "dashboard" | "analytics" | "history" | "detail";
+function AppContent() {
+  const { loading } = useAuth();
+  const [authPage, setAuthPage] = useState<"login" | "register">("login");
 
-function App() {
-  const [page, setPage] = useState<Page>("dashboard");
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
+  if (loading) {
+    return <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-200">Loading...</div>;
+  }
 
-  if (page === "analytics") return <AnalyticsDashboard onNavigate={setPage} />;
-  if (page === "history") return <InvoiceHistory onNavigate={setPage} onOpenInvoice={(id) => { setSelectedInvoiceId(id); setPage("detail"); }} />;
-  if (page === "detail" && selectedInvoiceId !== null) return <InvoiceDetail invoiceId={selectedInvoiceId} onNavigate={setPage} />;
+  const authScreen = authPage === "login"
+    ? <LoginPage onRegister={() => setAuthPage("register")} />
+    : <RegisterPage onLogin={() => setAuthPage("login")} />;
 
-  return <Dashboard onNavigate={setPage} />;
+  return <ProtectedRoute unauthenticated={authScreen}><Dashboard /></ProtectedRoute>;
 }
 
-export default App;
+export default function App() {
+  return <AuthProvider><AppContent /></AuthProvider>;
+}

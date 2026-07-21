@@ -30,12 +30,34 @@ class Invoice(Base):
     field_validation: Mapped[dict] = mapped_column(JSON, default=dict)
     classification_data: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)
+    owner_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), index=True)
+    uploaded_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    reviewed_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    approved_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     line_items: Mapped[list["LineItem"]] = relationship(
         back_populates="invoice", cascade="all, delete-orphan"
     )
     audit_trail: Mapped[list["AuditTrail"]] = relationship(
         back_populates="invoice", cascade="all, delete-orphan"
+    )
+    owner: Mapped["User | None"] = relationship(foreign_keys=[owner_id], back_populates="invoices")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(255))
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(32), default="viewer", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    invoices: Mapped[list[Invoice]] = relationship(
+        foreign_keys="Invoice.owner_id", back_populates="owner"
     )
 
 

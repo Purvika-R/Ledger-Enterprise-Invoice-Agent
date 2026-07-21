@@ -65,7 +65,7 @@ def serialize_invoice(invoice, detailed=False):
     return data
 
 
-def save_processed_invoice(db: Session, state):
+def save_processed_invoice(db: Session, state, user=None):
     final_json = state.get("final_json", {})
     classification = state.get("classification", {})
     header = state.get("header_fields", {})
@@ -86,6 +86,8 @@ def save_processed_invoice(db: Session, state):
         validation_errors=state.get("validation_errors", []),
         field_validation=final_json.get("field_validation", {}),
         classification_data=classification,
+        owner_id=user.id if user else None,
+        uploaded_by_id=user.id if user else None,
     )
     db.add(invoice)
     db.flush()
@@ -128,8 +130,10 @@ def save_processed_invoice(db: Session, state):
 
 
 def list_invoices(db: Session, vendor=None, currency=None, date_from=None, date_to=None,
-                  approval_status=None, validation_passed=None, search=None):
+                  approval_status=None, validation_passed=None, search=None, user=None):
     statement = select(Invoice).order_by(Invoice.created_at.desc())
+    if user and user.role != "admin":
+        statement = statement.where(Invoice.owner_id == user.id)
 
     if vendor:
         statement = statement.where(Invoice.vendor.ilike(f"%{vendor}%"))
@@ -153,17 +157,21 @@ def list_invoices(db: Session, vendor=None, currency=None, date_from=None, date_
     return list(db.scalars(statement))
 
 
-def get_invoice(db: Session, invoice_id: int):
+def get_invoice(db: Session, invoice_id: int, user=None):
     statement = (
         select(Invoice)
         .where(Invoice.id == invoice_id)
         .options(selectinload(Invoice.line_items), selectinload(Invoice.audit_trail))
     )
+    if user and user.role != "admin":
+        statement = statement.where(Invoice.owner_id == user.id)
     return db.scalar(statement)
 
 
-def analytics_summary(db: Session):
-    invoices = list(db.scalars(select(Invoice).where(Invoice.is_invoice.is_(True))))
+def analytics_summary(db: Session, user=None):
+    statement = select(Invoice).where(Invoice.is_invoice.is_(True))
+    if user and user.role != "admin": statement = statement.where(Invoice.owner_id == user.id)
+    invoices = list(db.scalars(statement))
     total = len(invoices)
     valid_count = sum(1 for invoice in invoices if invoice.validation_passed is True)
     confidences = [invoice.classification_confidence for invoice in invoices if invoice.classification_confidence is not None]
