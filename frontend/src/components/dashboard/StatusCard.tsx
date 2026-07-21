@@ -3,11 +3,24 @@ import LineItemsTable from "./LineItemsTable";
 import VendorMemoryCard from "./VendorMemoryCard";
 import ConfidenceCard from "./ConfidenceCard";
 import ValidationCard from "./ValidationCard";
+import ApprovalPanel from "./ApprovalPanel";
+
+type FieldValidationResult = {
+  valid: boolean;
+  message: string;
+};
 
 type Props = {
   data: any;
   processing: boolean;
   progress: any[];
+  reviewedHeader: any;
+  reviewedLineItems: any[];
+  liveFieldValidation: Record<string, FieldValidationResult> | null;
+  approved: boolean;
+  onHeaderFieldChange: (field: string, value: string) => void;
+  onLineItemChange: (index: number, field: string, value: string) => void;
+  onApprove: () => void;
 };
 
 const AGENTS = [
@@ -23,6 +36,13 @@ export default function StatusCard({
   data,
   processing,
   progress,
+  reviewedHeader,
+  reviewedLineItems,
+  liveFieldValidation,
+  approved,
+  onHeaderFieldChange,
+  onLineItemChange,
+  onApprove,
 }: Props) {
 
   if (processing) {
@@ -76,7 +96,13 @@ export default function StatusCard({
   return (
     <div className="space-y-6">
 
-      <HeaderCard header={data.header} />
+      <HeaderCard
+        header={reviewedHeader ?? data.header}
+        fieldValidation={data.field_validation}
+        liveFieldValidation={liveFieldValidation ?? undefined}
+        onFieldChange={onHeaderFieldChange}
+        locked={approved}
+      />
 
       <VendorMemoryCard
         vendorMemory={data.vendor_memory}
@@ -87,11 +113,22 @@ export default function StatusCard({
       />
 
       <ValidationCard
-        confidence={data.confidence}
+        validationErrors={data.validation_errors}
+        fieldValidation={data.field_validation}
       />
 
       <LineItemsTable
-        items={data.line_items}
+        items={reviewedLineItems ?? data.line_items}
+        fieldValidation={data.field_validation}
+        liveFieldValidation={liveFieldValidation ?? undefined}
+        onItemChange={onLineItemChange}
+        locked={approved}
+      />
+
+      <ApprovalPanel
+        fieldValidation={liveFieldValidation}
+        approved={approved}
+        onApprove={onApprove}
       />
 
     </div>

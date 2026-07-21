@@ -1,8 +1,31 @@
-type Props = {
-  header: any;
+type FieldValidationResult = {
+  valid: boolean;
+  message: string;
 };
 
-export default function HeaderCard({ header }: Props) {
+type Props = {
+  header: any;
+  fieldValidation?: Record<string, FieldValidationResult>;
+  liveFieldValidation?: Record<string, FieldValidationResult>;
+  onFieldChange?: (field: string, value: string) => void;
+  locked?: boolean;
+};
+
+const HEADER_FIELDS: { key: string; label: string; emphasize?: boolean }[] = [
+  { key: "invoice_number", label: "Invoice Number" },
+  { key: "vendor", label: "Vendor" },
+  { key: "invoice_date", label: "Invoice Date" },
+  { key: "currency", label: "Currency" },
+  { key: "total_amount", label: "Total Amount", emphasize: true },
+];
+
+export default function HeaderCard({
+  header,
+  fieldValidation,
+  liveFieldValidation,
+  onFieldChange,
+  locked,
+}: Props) {
   return (
     <div className="rounded-xl bg-white p-6 shadow">
       <h2 className="mb-5 text-xl font-semibold">
@@ -11,55 +34,67 @@ export default function HeaderCard({ header }: Props) {
 
       <div className="space-y-4">
 
-        <div>
-          <p className="text-sm text-slate-500">
-            Invoice Number
-          </p>
+        {HEADER_FIELDS.map(({ key, label, emphasize }) => {
+          // A field is only opened up for editing if the AI pipeline
+          // originally flagged it invalid. Fields the pipeline trusted
+          // stay read-only, per the review workflow.
+          const original = fieldValidation?.[key];
+          const live = liveFieldValidation?.[key];
+          const editable = Boolean(original && !original.valid) && !locked;
 
-          <p className="font-medium">
-            {header.invoice_number || "-"}
-          </p>
-        </div>
+          const wrapperClasses =
+            original && !original.valid
+              ? "rounded-lg border border-red-300 bg-red-50 px-3 py-2"
+              : "";
 
-        <div>
-          <p className="text-sm text-slate-500">
-            Vendor
-          </p>
+          return (
+            <div key={key} className={wrapperClasses}>
 
-          <p className="font-medium">
-            {header.vendor || "-"}
-          </p>
-        </div>
+              <div className="mb-1 flex items-center justify-between">
+                <p className="text-sm text-slate-500">
+                  {label}
+                </p>
 
-        <div>
-          <p className="text-sm text-slate-500">
-            Invoice Date
-          </p>
+                {editable && live && (
+                  <span
+                    className={
+                      "text-xs font-medium " +
+                      (live.valid ? "text-green-600" : "text-red-600")
+                    }
+                    title={live.message}
+                  >
+                    {live.valid ? "✓ corrected" : "✗ needs fix"}
+                  </span>
+                )}
+              </div>
 
-          <p className="font-medium">
-            {header.invoice_date || "-"}
-          </p>
-        </div>
-
-        <div>
-          <p className="text-sm text-slate-500">
-            Currency
-          </p>
-
-          <p className="font-medium">
-            {header.currency || "-"}
-          </p>
-        </div>
-
-        <div>
-          <p className="text-sm text-slate-500">
-            Total Amount
-          </p>
-
-          <p className="font-semibold text-lg text-blue-600">
-            {header.total_amount || "-"}
-          </p>
-        </div>
+              {editable ? (
+                <input
+                  type="text"
+                  value={header?.[key] ?? ""}
+                  onChange={(e) => onFieldChange?.(key, e.target.value)}
+                  title={original?.message}
+                  className={
+                    "w-full rounded border px-2 py-1 font-medium focus:outline-none focus:ring-2 " +
+                    (live?.valid
+                      ? "border-green-400 focus:ring-green-300"
+                      : "border-red-400 focus:ring-red-300")
+                  }
+                />
+              ) : (
+                <p
+                  className={
+                    emphasize
+                      ? "text-lg font-semibold text-blue-600"
+                      : "font-medium"
+                  }
+                >
+                  {header?.[key] || "-"}
+                </p>
+              )}
+            </div>
+          );
+        })}
 
       </div>
     </div>
