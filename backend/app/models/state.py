@@ -37,3 +37,6 @@ class LedgerState(TypedDict):
 
     # Final Output
     final_json: Dict[str, Any]
+
+    # Audit Trail
+    audit_trail: List[Dict[str, Any]]

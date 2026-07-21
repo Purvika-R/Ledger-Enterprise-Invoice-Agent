@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.invoice import router as invoice_router
 from app.api.router import api_router
+from app.db.database import init_db
 
 app = FastAPI(
     title="Ledger AI",
@@ -28,6 +29,13 @@ app.add_middleware(
 )
 
 app.include_router(invoice_router)
+
+
+@app.on_event("startup")
+def create_database_tables():
+    init_db()
+
+
 @app.get("/progress")
 def progress():
 

@@ -3,9 +3,14 @@ import { useEffect, useMemo, useState } from "react";
 import Header from "../components/layout/Header";
 import UploadCard from "../components/upload/UploadCard";
 import StatusCard from "../components/dashboard/StatusCard";
+import AuditTrailCard from "../components/dashboard/AuditTrailCard";
 import { validateHeaderAndLineItems } from "../utils/validation";
 
-export default function Dashboard() {
+type Props = {
+  onNavigate?: (page: "dashboard" | "analytics" | "history") => void;
+};
+
+export default function Dashboard({ onNavigate }: Props) {
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState<any[]>([]);
@@ -83,7 +88,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <Header />
+      <Header activePage="dashboard" onNavigate={onNavigate} />
 
       <main className="mx-auto max-w-7xl p-8">
 
@@ -107,6 +112,11 @@ export default function Dashboard() {
             onLineItemChange={handleLineItemChange}
             onApprove={handleApprove}
             onUploadAnother={handleUploadAnother}
+          />
+
+          <AuditTrailCard
+            auditTrail={invoiceData?.audit_trail ?? []}
+            result={invoiceData}
           />
 
         </div>

@@ -59,7 +59,7 @@ export default function StatusCard({
 
         {AGENTS.map((agent) => {
 
-          const event = progress.find(
+          const event = [...progress].reverse().find(
             (p) => p.agent === agent
           );
 
