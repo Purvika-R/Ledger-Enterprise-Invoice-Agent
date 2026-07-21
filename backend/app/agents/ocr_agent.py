@@ -1,11 +1,20 @@
 from app.ocr.ocr_service import extract_text
+from app.core.progress import send_progress
 
 
 def ocr_agent(state):
-    print("Running OCR Agent...")
+    send_progress("OCR Agent", "running")
 
-    text = extract_text(state["image_path"])
+    try:
+        print("Running OCR Agent...")
 
-    state["ocr_text"] = text
+        text = extract_text(state["image_path"])
+
+        state["ocr_text"] = text
+    except Exception:
+        send_progress("OCR Agent", "failed")
+        raise
+
+    send_progress("OCR Agent", "completed")
 
     return state

@@ -3,6 +3,7 @@ import re
 from app.core.llm import llm
 from app.agents.header_agent import extract_json
 from app.models.state import ClassificationResult
+from app.core.progress import send_progress
 
 
 # ---------------------------------------------------------------------------
@@ -214,23 +215,31 @@ def classify_invoice(ocr_text: str) -> ClassificationResult:
 
 
 def classification_agent(state):
-    print("Running Classification Agent...")
+    send_progress("Classification Agent", "running")
 
-    result = classify_invoice(state.get("ocr_text", ""))
-    state["classification"] = result
+    try:
+        print("Running Classification Agent...")
 
-    if not result["is_invoice"]:
-        # The graph terminates right after this node for non-invoice
-        # documents, so final_json must already carry the rejection
-        # contract here -- there is no later node to build it.
-        state["final_json"] = {
-            "success": False,
-            "classification": result,
-        }
+        result = classify_invoice(state.get("ocr_text", ""))
+        state["classification"] = result
 
-    print(
-        f"Classification complete: is_invoice={result['is_invoice']} "
-        f"method={result['method']} confidence={result['confidence']}"
-    )
+        if not result["is_invoice"]:
+            # The graph terminates right after this node for non-invoice
+            # documents, so final_json must already carry the rejection
+            # contract here -- there is no later node to build it.
+            state["final_json"] = {
+                "success": False,
+                "classification": result,
+            }
+
+        print(
+            f"Classification complete: is_invoice={result['is_invoice']} "
+            f"method={result['method']} confidence={result['confidence']}"
+        )
+    except Exception:
+        send_progress("Classification Agent", "failed")
+        raise
+
+    send_progress("Classification Agent", "completed")
 
     return state

@@ -189,23 +189,28 @@ def validation_agent(state):
 
     send_progress("Validation Agent", "running")
 
-    header = state["header_fields"]
-    line_items = state["line_items"]
+    try:
+        header = state["header_fields"]
+        line_items = state["line_items"]
 
-    errors, field_validation = validate_invoice(header, line_items)
-    state["validation_errors"] = errors
+        errors, field_validation = validate_invoice(header, line_items)
+        state["validation_errors"] = errors
 
-    state["final_json"] = {
-        "header": header,
-        "line_items": line_items,
-        "vendor_memory": state["vendor_memory"],
-        "confidence": state["confidence"],
-        "validation_errors": errors,
-        "validation_passed": len(errors) == 0,
-        "field_validation": field_validation,
-    }
+        state["final_json"] = {
+            "header": header,
+            "line_items": line_items,
+            "vendor_memory": state["vendor_memory"],
+            "confidence": state["confidence"],
+            "validation_errors": errors,
+            "validation_passed": len(errors) == 0,
+            "field_validation": field_validation,
+        }
 
-    print(f"Validation complete. {len(errors)} issue(s) found.")
+        print(f"Validation complete. {len(errors)} issue(s) found.")
+    except Exception:
+        send_progress("Validation Agent", "failed")
+        raise
+
     send_progress("Validation Agent", "completed")
 
     return state

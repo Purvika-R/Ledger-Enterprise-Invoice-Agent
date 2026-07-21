@@ -2,6 +2,7 @@ import json
 import re
 
 from app.core.llm import llm
+from app.core.progress import send_progress
 
 
 def extract_json(text: str):
@@ -14,9 +15,12 @@ def extract_json(text: str):
 
 
 def header_agent(state):
-    print("Running Header Agent...")
+    send_progress("Header Agent", "running")
 
-    prompt = f"""
+    try:
+        print("Running Header Agent...")
+
+        prompt = f"""
 You are an enterprise invoice extraction AI.
 
 Extract ONLY the invoice header.
@@ -61,10 +65,15 @@ Invoice:
 {state["ocr_text"]}
 """
 
-    response = llm.invoke(prompt)
+        response = llm.invoke(prompt)
 
-    state["header_fields"] = extract_json(response.content)
+        state["header_fields"] = extract_json(response.content)
 
-    print("Header extraction complete.")
+        print("Header extraction complete.")
+    except Exception:
+        send_progress("Header Agent", "failed")
+        raise
+
+    send_progress("Header Agent", "completed")
 
     return state

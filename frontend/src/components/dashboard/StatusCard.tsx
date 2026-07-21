@@ -27,9 +27,10 @@ type Props = {
 
 const AGENTS = [
   "OCR Agent",
+  "Classification Agent",
   "Header Agent",
   "Line Item Agent",
-  "Vendor Memory",
+  "Vendor Memory Agent",
   "Confidence Agent",
   "Validation Agent",
 ];
@@ -62,13 +63,25 @@ export default function StatusCard({
             (p) => p.agent === agent
           );
 
+          // pending (⬜) is the default when no event has arrived yet for
+          // this agent -- this also covers agents the pipeline never
+          // reached, e.g. everything after Classification on a rejected
+          // document.
           let icon = "⬜";
+          let labelClasses = "";
 
-          if (event?.status === "running")
+          if (event?.status === "running") {
             icon = "🟡";
+          }
 
-          if (event?.status === "completed")
+          if (event?.status === "completed") {
             icon = "✅";
+          }
+
+          if (event?.status === "failed") {
+            icon = "❌";
+            labelClasses = "font-medium text-red-600";
+          }
 
           return (
             <div
@@ -79,7 +92,7 @@ export default function StatusCard({
                 {icon}
               </span>
 
-              <span>{agent}</span>
+              <span className={labelClasses}>{agent}</span>
             </div>
           );
         })}
