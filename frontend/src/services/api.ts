@@ -26,6 +26,9 @@ export type InvoiceSummary = {
   approval_status: string;
   validation_passed: boolean | null;
   is_invoice: boolean;
+  retry_used: boolean;
+  retry_count: number;
+  auto_corrected: boolean;
 };
 
 export async function getInvoices(filters: Record<string, string | boolean | undefined> = {}) {

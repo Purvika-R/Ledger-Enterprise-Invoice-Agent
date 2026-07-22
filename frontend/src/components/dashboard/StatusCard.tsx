@@ -1,3 +1,5 @@
+import { AnimatePresence, motion } from "framer-motion";
+
 import HeaderCard from "./HeaderCard";
 import LineItemsTable from "./LineItemsTable";
 import VendorMemoryCard from "./VendorMemoryCard";
@@ -25,7 +27,7 @@ type Props = {
   onUploadAnother?: () => void;
 };
 
-const AGENTS = [
+const BASE_AGENTS = [
   "OCR Agent",
   "Classification Agent",
   "Header Agent",
@@ -48,6 +50,15 @@ export default function StatusCard({
   onApprove,
   onUploadAnother,
 }: Props) {
+  const retryInProgress = progress.some(
+    (event) => (event.agent === "Retry Agent" || event.agent === "Header Retry" || event.agent === "Line Item Retry") && event.status === "running"
+  );
+  const displayAgents = [
+    ...BASE_AGENTS,
+    ...["Retry Agent", "Header Retry", "Line Item Retry"].filter((agent) => progress.some((event) => event.agent === agent)),
+  ];
+  const retrySucceeded = Boolean(data?.retry_used && data?.auto_corrected);
+  const retryFailed = Boolean(data?.retry_used && !data?.auto_corrected && data?.validation_errors?.length);
 
   if (processing) {
     return (
@@ -57,7 +68,11 @@ export default function StatusCard({
           AI Processing Pipeline
         </h2>
 
-        {AGENTS.map((agent) => {
+        <AnimatePresence>
+          {retryInProgress && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mb-5 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800"><p className="font-semibold">Validation failed.</p><p>Ledger AI is automatically retrying extraction...</p></motion.div>}
+        </AnimatePresence>
+
+        {displayAgents.map((agent) => {
 
           const event = [...progress].reverse().find(
             (p) => p.agent === agent
@@ -120,6 +135,11 @@ export default function StatusCard({
 
   return (
     <div className="space-y-6">
+
+      <AnimatePresence>
+        {retrySucceeded && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800"><p className="font-semibold">Automatic correction successful.</p></motion.div>}
+        {retryFailed && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"><p className="font-semibold">Automatic retry could not resolve all validation issues.</p><p>Human Review is required.</p></motion.div>}
+      </AnimatePresence>
 
       <HeaderCard
         header={reviewedHeader ?? data.header}

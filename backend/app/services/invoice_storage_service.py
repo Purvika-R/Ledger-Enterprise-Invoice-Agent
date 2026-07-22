@@ -29,6 +29,9 @@ def serialize_invoice(invoice, detailed=False):
         "is_invoice": invoice.is_invoice,
         "classification_confidence": invoice.classification_confidence,
         "classification_method": invoice.classification_method,
+        "retry_used": invoice.retry_used,
+        "retry_count": invoice.retry_count,
+        "auto_corrected": invoice.auto_corrected,
         "created_at": invoice.created_at.isoformat() if invoice.created_at else None,
     }
 
@@ -39,6 +42,9 @@ def serialize_invoice(invoice, detailed=False):
             "validation_errors": invoice.validation_errors or [],
             "field_validation": invoice.field_validation or {},
             "classification": invoice.classification_data or {},
+            "retry_decision": invoice.retry_decision,
+            "retry_agents": invoice.retry_agents or [],
+            "retry_duration_ms": invoice.retry_duration_ms,
             "line_items": [
                 {
                     "id": item.id,
@@ -86,6 +92,12 @@ def save_processed_invoice(db: Session, state, user=None):
         validation_errors=state.get("validation_errors", []),
         field_validation=final_json.get("field_validation", {}),
         classification_data=classification,
+        retry_used=bool(state.get("retry_used", False)),
+        retry_count=state.get("retry_count", 0),
+        retry_decision=state.get("retry_decision"),
+        retry_agents=state.get("retry_agents", []),
+        retry_duration_ms=state.get("retry_duration_ms"),
+        auto_corrected=bool(state.get("auto_corrected", False)),
         owner_id=user.id if user else None,
         uploaded_by_id=user.id if user else None,
     )
@@ -174,6 +186,10 @@ def analytics_summary(db: Session, user=None):
     invoices = list(db.scalars(statement))
     total = len(invoices)
     valid_count = sum(1 for invoice in invoices if invoice.validation_passed is True)
+    retried_invoices = [invoice for invoice in invoices if invoice.retry_used]
+    corrected_invoices = [invoice for invoice in retried_invoices if invoice.auto_corrected]
+    retry_failures = [invoice for invoice in retried_invoices if not invoice.auto_corrected]
+    retry_durations = [invoice.retry_duration_ms for invoice in retried_invoices if invoice.retry_duration_ms is not None]
     confidences = [invoice.classification_confidence for invoice in invoices if invoice.classification_confidence is not None]
 
     vendor_rows = db.execute(
@@ -202,6 +218,10 @@ def analytics_summary(db: Session, user=None):
         "known_vendors": db.scalar(select(func.count(VendorMemory.id)).where(VendorMemory.known_vendor.is_(True))) or 0,
         "average_confidence": round((sum(confidences) / len(confidences) * 100), 1) if confidences else 0,
         "validation_success_rate": round((valid_count / total * 100), 1) if total else 0,
+        "invoices_automatically_corrected": len(corrected_invoices),
+        "retry_success_rate": round((len(corrected_invoices) / len(retried_invoices) * 100), 1) if retried_invoices else 0,
+        "retry_failure_rate": round((len(retry_failures) / len(retried_invoices) * 100), 1) if retried_invoices else 0,
+        "average_retry_time_ms": round(sum(retry_durations) / len(retry_durations), 1) if retry_durations else 0,
         "vendor_frequency": [{"vendor": vendor, "count": count} for vendor, count in vendor_rows],
         "invoice_trend": [{"date": date, "count": count} for date, count in trend_rows],
         "confidence_distribution": [{"range": key, "count": value} for key, value in distribution.items()],
@@ -221,7 +241,7 @@ def export_invoices(invoices, export_format):
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=[
         "id", "invoice_number", "vendor", "invoice_date", "currency", "total_amount",
-        "approval_status", "validation_passed", "is_invoice", "created_at",
+        "approval_status", "validation_passed", "is_invoice", "retry_used", "retry_count", "auto_corrected", "created_at",
     ])
     writer.writeheader()
     writer.writerows(records)

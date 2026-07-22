@@ -3,7 +3,8 @@ from app.core.progress import send_progress
 import json
 
 def line_item_agent(state):
-    send_progress("Line Item Agent", "running")
+    progress_name = state.get("progress_agent_name", "Line Item Agent")
+    send_progress(progress_name, "running")
 
     try:
         prompt = f"""
@@ -51,9 +52,9 @@ Invoice:
 
         print("Line item extraction complete.")
     except Exception:
-        send_progress("Line Item Agent", "failed")
+        send_progress(progress_name, "failed")
         raise
 
-    send_progress("Line Item Agent", "completed")
+    send_progress(progress_name, "completed")
 
     return state

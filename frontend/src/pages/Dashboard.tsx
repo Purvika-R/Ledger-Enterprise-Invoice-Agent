@@ -114,10 +114,12 @@ export default function Dashboard({ onNavigate }: Props) {
             onUploadAnother={handleUploadAnother}
           />
 
-          <AuditTrailCard
-            auditTrail={invoiceData?.audit_trail ?? []}
-            result={invoiceData}
-          />
+          <section id="audit-trail">
+            <AuditTrailCard
+              auditTrail={invoiceData?.audit_trail ?? []}
+              result={invoiceData}
+            />
+          </section>
 
         </div>
 

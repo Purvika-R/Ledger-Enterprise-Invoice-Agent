@@ -15,7 +15,8 @@ def extract_json(text: str):
 
 
 def header_agent(state):
-    send_progress("Header Agent", "running")
+    progress_name = state.get("progress_agent_name", "Header Agent")
+    send_progress(progress_name, "running")
 
     try:
         print("Running Header Agent...")
@@ -71,9 +72,9 @@ Invoice:
 
         print("Header extraction complete.")
     except Exception:
-        send_progress("Header Agent", "failed")
+        send_progress(progress_name, "failed")
         raise
 
-    send_progress("Header Agent", "completed")
+    send_progress(progress_name, "completed")
 
     return state

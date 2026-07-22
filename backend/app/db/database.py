@@ -30,6 +30,12 @@ def init_db():
         "approved_by_id": "INTEGER",
         "reviewed_at": "DATETIME",
         "approved_at": "DATETIME",
+        "retry_used": "BOOLEAN DEFAULT 0",
+        "retry_count": "INTEGER DEFAULT 0",
+        "retry_decision": "VARCHAR(32)",
+        "retry_agents": "JSON DEFAULT '[]'",
+        "retry_duration_ms": "INTEGER",
+        "auto_corrected": "BOOLEAN DEFAULT 0",
     }
     with engine.begin() as connection:
         for column, column_type in migrations.items():

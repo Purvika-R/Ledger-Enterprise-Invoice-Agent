@@ -195,6 +195,9 @@ def validation_agent(state):
 
         errors, field_validation = validate_invoice(header, line_items)
         state["validation_errors"] = errors
+        retry_used = bool(state.get("retry_used", False))
+        auto_corrected = retry_used and not errors
+        state["auto_corrected"] = auto_corrected
 
         state["final_json"] = {
             "header": header,
@@ -204,6 +207,12 @@ def validation_agent(state):
             "validation_errors": errors,
             "validation_passed": len(errors) == 0,
             "field_validation": field_validation,
+            "retry_used": retry_used,
+            "retry_count": state.get("retry_count", 0),
+            "retry_decision": state.get("retry_decision"),
+            "retry_agents": state.get("retry_agents", []),
+            "retry_duration_ms": state.get("retry_duration_ms"),
+            "auto_corrected": auto_corrected,
         }
 
         print(f"Validation complete. {len(errors)} issue(s) found.")

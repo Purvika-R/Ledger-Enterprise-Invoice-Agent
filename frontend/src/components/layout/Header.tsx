@@ -1,3 +1,7 @@
+import { useContext } from "react";
+
+import { AppShellContext } from "./ProtectedLayout";
+
 type Page = "dashboard" | "analytics" | "history";
 
 type Props = {
@@ -6,6 +10,10 @@ type Props = {
 };
 
 export default function Header({ activePage = "dashboard", onNavigate }: Props) {
+  const inAppShell = useContext(AppShellContext);
+
+  if (inAppShell) return null;
+
   return (
     <header className="bg-white border-b shadow-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-8 py-5">

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, ShieldCheck } from "lucide-react";
 
+import AuthLayout from "../components/auth/AuthLayout";
 import { useAuth } from "../context/AuthContext";
 
 type Props = {
@@ -45,7 +46,7 @@ export default function RegisterPage({ onLogin }: Props) {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 p-5 text-white">
+    <AuthLayout>
       <motion.form
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -119,6 +120,6 @@ export default function RegisterPage({ onLogin }: Props) {
           Already have an account? <button type="button" onClick={onLogin} className="font-semibold text-blue-400 hover:text-blue-300">Sign in</button>
         </p>
       </motion.form>
-    </main>
+    </AuthLayout>
   );
 }

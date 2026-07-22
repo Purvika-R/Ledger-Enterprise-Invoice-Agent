@@ -54,6 +54,12 @@ async def process_invoice(file: UploadFile = File(...), user: User = Depends(req
             "vendor_memory": {},
             "confidence": {},
             "validation_errors": [],
+            "retry_count": 0,
+            "retry_used": False,
+            "retry_decision": None,
+            "retry_agents": [],
+            "retry_duration_ms": None,
+            "auto_corrected": False,
             "final_json": {},
             "audit_trail": [],
         }

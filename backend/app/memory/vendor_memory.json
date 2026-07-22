@@ -6,15 +6,21 @@
         "invoice_count": 2
     },
     "CLICKTECH RETAIL PRIVATE LIMITED": {
-        "invoice_count": 11
+        "invoice_count": 12
     },
     "SV ELECTRONICS UMITED": {
-        "invoice_count": 1
+        "invoice_count": 2
     },
     "ABC Inc.": {
         "invoice_count": 2
     },
     "Microsoft Corporation": {
-        "invoice_count": 1
+        "invoice_count": 3
+    },
+    "Amazon Web Services, Inc.": {
+        "invoice_count": 2
+    },
+    "hp@gmail.com": {
+        "invoice_count": 2
     }
 }

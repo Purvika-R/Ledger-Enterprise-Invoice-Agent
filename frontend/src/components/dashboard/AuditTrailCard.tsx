@@ -27,6 +27,9 @@ const AGENT_DETAILS: Record<string, { icon: string; label: string }> = {
   "Vendor Memory Agent": { icon: "🏢", label: "Vendor Memory Agent" },
   "Confidence Agent": { icon: "🎯", label: "Confidence Agent" },
   "Validation Agent": { icon: "✅", label: "Validation Agent" },
+  "Retry Agent": { icon: "↻", label: "Retry Agent" },
+  "Header Retry": { icon: "↻", label: "Header Retry" },
+  "Line Item Retry": { icon: "↻", label: "Line Item Retry" },
 };
 
 const STATUS_CLASSES: Record<string, string> = {
@@ -91,7 +94,7 @@ function agentDetails(entry: AuditEntry, result: any): Detail[] {
     return classificationDetails(entry, result);
   }
 
-  if (entry.agent_name === "Header Agent") {
+  if (entry.agent_name === "Header Agent" || entry.agent_name === "Header Retry") {
     const fields = Object.keys(result?.header ?? {});
 
     return [
@@ -135,6 +138,10 @@ function agentDetails(entry: AuditEntry, result: any): Detail[] {
           : `${issueCount ?? 0} validation issue${issueCount === 1 ? "" : "s"} found.`,
       },
     ];
+  }
+
+  if (entry.agent_name === "Retry Agent" || entry.agent_name === "Line Item Retry") {
+    return [{ label: "Summary", value: entry.summary }];
   }
 
   return [{ label: "Summary", value: entry.summary }];

@@ -1,4 +1,9 @@
-from typing import TypedDict, List, Dict, Any, Literal, NotRequired
+from typing import TypedDict, List, Dict, Any, Literal
+
+try:
+    from typing import NotRequired
+except ImportError:  # Python 3.10 compatibility
+    from typing_extensions import NotRequired
 
 
 class ClassificationResult(TypedDict):
@@ -34,6 +39,14 @@ class LedgerState(TypedDict):
 
     # Validation
     validation_errors: List[str]
+
+    # Autonomous retry
+    retry_count: int
+    retry_used: bool
+    retry_decision: str | None
+    retry_agents: List[str]
+    retry_duration_ms: int | None
+    auto_corrected: bool
 
     # Final Output
     final_json: Dict[str, Any]
