@@ -1,47 +1,6 @@
-type Props = {
-  confidence: any;
-};
+import { motion } from "framer-motion";
+import { Gauge } from "lucide-react";
 
-export default function ConfidenceCard({ confidence }: Props) {
-  if (!confidence) return null;
-
-  return (
-    <div className="rounded-xl bg-white p-6 shadow">
-
-      <h2 className="mb-5 text-xl font-semibold">
-        Confidence Scores
-      </h2>
-
-      {Object.entries(confidence).map(([key, value]: any) => (
-
-        <div key={key} className="mb-5">
-
-          <div className="mb-2 flex justify-between">
-
-            <span className="capitalize">
-              {key.replace("_", " ")}
-            </span>
-
-            <span>
-              {(value * 100).toFixed(0)}%
-            </span>
-
-          </div>
-
-          <div className="h-3 rounded bg-slate-200">
-
-            <div
-              className="h-3 rounded bg-blue-600"
-              style={{
-                width: `${value * 100}%`,
-              }}
-            />
-
-          </div>
-
-        </div>
-
-      ))}
-    </div>
-  );
-}
+type Props = { confidence: any };
+function tone(value: number) { return value >= .95 ? "bg-emerald-500" : value >= .8 ? "bg-blue-500" : value >= .6 ? "bg-amber-500" : "bg-rose-500"; }
+export default function ConfidenceCard({ confidence }: Props) { if (!confidence) return null; return <section className="premium-card rounded-3xl p-5"><div className="mb-5 flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Quality signal</p><h2 className="mt-1 text-lg font-semibold text-slate-900">Confidence scores</h2></div><Gauge className="text-blue-600" size={21} /></div><div className="space-y-4">{Object.entries(confidence).map(([key, raw]: any) => { const value = Number(raw) || 0; const percentage = Math.round(value * 100); return <div key={key}><div className="mb-1.5 flex justify-between text-xs"><span className="font-medium capitalize text-slate-600">{key.replace(/_/g, " ")}</span><span className="font-bold text-slate-700">{percentage}%</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><motion.div initial={{ width: 0 }} animate={{ width: `${percentage}%` }} transition={{ duration: .55, ease: "easeOut" }} className={`h-full rounded-full ${tone(value)}`} /></div></div>; })}</div></section>; }

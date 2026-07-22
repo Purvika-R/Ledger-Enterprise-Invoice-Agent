@@ -15,7 +15,7 @@ export default function Header({ activePage = "dashboard", onNavigate }: Props) 
   if (inAppShell) return null;
 
   return (
-    <header className="bg-white border-b shadow-sm">
+    <header className="border-b border-slate-200 bg-white shadow-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-8 py-5">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Ledger AI</h1>

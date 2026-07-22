@@ -1,43 +1,4 @@
-type Props = {
-  vendorMemory: any;
-};
+import { Building2, Database, Sparkles } from "lucide-react";
 
-export default function VendorMemoryCard({ vendorMemory }: Props) {
-  return (
-    <div className="rounded-xl bg-white p-6 shadow">
-      <h2 className="mb-4 text-xl font-semibold">
-        Vendor Memory
-      </h2>
-
-      <div className="space-y-4">
-
-        <div>
-          <p className="text-sm text-slate-500">
-            Known Vendor
-          </p>
-
-          <span
-            className={`rounded-full px-3 py-1 text-sm font-medium ${
-              vendorMemory?.known_vendor
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {vendorMemory?.known_vendor ? "Yes" : "No"}
-          </span>
-        </div>
-
-        <div>
-          <p className="text-sm text-slate-500">
-            Previous Invoices
-          </p>
-
-          <p className="text-2xl font-bold">
-            {vendorMemory?.history?.invoice_count ?? 0}
-          </p>
-        </div>
-
-      </div>
-    </div>
-  );
-}
+type Props = { vendorMemory: any };
+export default function VendorMemoryCard({ vendorMemory }: Props) { const known = Boolean(vendorMemory?.known_vendor); const count = vendorMemory?.history?.invoice_count ?? 0; return <section className="premium-card rounded-3xl p-5"><div className="mb-5 flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Context layer</p><h2 className="mt-1 text-lg font-semibold text-slate-900">Vendor memory</h2></div><Database className="text-indigo-600" size={21} /></div><div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3"><div className={`grid h-10 w-10 place-items-center rounded-xl ${known ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-slate-600"}`}><Building2 size={19} /></div><div><p className="text-sm font-semibold text-slate-800">{known ? "Known vendor" : "New vendor"}</p><p className="text-xs text-slate-500">{known ? "Recognized from workspace history" : "Added to memory after processing"}</p></div></div><div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-2xl border border-slate-100 p-3"><p className="text-xs text-slate-500">Previous invoices</p><p className="mt-1 text-xl font-semibold text-slate-900">{count}</p></div><div className="rounded-2xl border border-slate-100 p-3"><p className="text-xs text-slate-500">Memory confidence</p><p className="mt-1 flex items-center gap-1 text-xl font-semibold text-indigo-700">{known ? "High" : "Learning"}<Sparkles size={15} /></p></div></div></section>; }

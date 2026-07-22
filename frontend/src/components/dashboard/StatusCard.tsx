@@ -1,181 +1,32 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { Bot, CheckCircle2, Circle, FileSearch, LoaderCircle, TriangleAlert } from "lucide-react";
 
+import ApprovalPanel from "./ApprovalPanel";
+import ConfidenceCard from "./ConfidenceCard";
 import HeaderCard from "./HeaderCard";
 import LineItemsTable from "./LineItemsTable";
-import VendorMemoryCard from "./VendorMemoryCard";
-import ConfidenceCard from "./ConfidenceCard";
-import ValidationCard from "./ValidationCard";
-import ApprovalPanel from "./ApprovalPanel";
 import NotInvoiceCard from "./NotInvoiceCard";
+import ValidationCard from "./ValidationCard";
+import VendorMemoryCard from "./VendorMemoryCard";
 
-type FieldValidationResult = {
-  valid: boolean;
-  message: string;
-};
+type FieldValidationResult = { valid: boolean; message: string };
+type Props = { data: any; processing: boolean; progress: any[]; reviewedHeader: any; reviewedLineItems: any[]; liveFieldValidation: Record<string, FieldValidationResult> | null; approved: boolean; onHeaderFieldChange: (field: string, value: string) => void; onLineItemChange: (index: number, field: string, value: string) => void; onApprove: () => void; onUploadAnother?: () => void };
 
-type Props = {
-  data: any;
-  processing: boolean;
-  progress: any[];
-  reviewedHeader: any;
-  reviewedLineItems: any[];
-  liveFieldValidation: Record<string, FieldValidationResult> | null;
-  approved: boolean;
-  onHeaderFieldChange: (field: string, value: string) => void;
-  onLineItemChange: (index: number, field: string, value: string) => void;
-  onApprove: () => void;
-  onUploadAnother?: () => void;
-};
+const BASE_AGENTS = ["OCR Agent", "Classification Agent", "Header Agent", "Line Item Agent", "Vendor Memory Agent", "Confidence Agent", "Validation Agent"];
 
-const BASE_AGENTS = [
-  "OCR Agent",
-  "Classification Agent",
-  "Header Agent",
-  "Line Item Agent",
-  "Vendor Memory Agent",
-  "Confidence Agent",
-  "Validation Agent",
-];
+function WorkflowTimeline({ progress }: { progress: any[] }) {
+  const agents = [...BASE_AGENTS, ...["Retry Agent", "Header Retry", "Line Item Retry"].filter((agent) => progress.some((event) => event.agent === agent))];
+  return <div className="relative mt-6 space-y-1">{agents.map((agent, index) => { const event = [...progress].reverse().find((item) => item.agent === agent); const status = event?.status ?? "pending"; const isLast = index === agents.length - 1; const icon = status === "completed" ? <CheckCircle2 size={17} /> : status === "failed" ? <TriangleAlert size={17} /> : status === "running" ? <LoaderCircle size={17} className="animate-spin" /> : <Circle size={15} />; const style = status === "completed" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : status === "failed" ? "border-rose-200 bg-rose-50 text-rose-700" : status === "running" ? "border-blue-200 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-400"; return <motion.div key={agent} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} className="relative flex gap-3"><div className="flex w-7 flex-col items-center"><span className={`z-10 grid h-7 w-7 place-items-center rounded-full border ${style}`}>{icon}</span>{!isLast && <span className={`my-1 w-px flex-1 ${status === "completed" ? "bg-emerald-200" : "bg-slate-200"}`} />}</div><div className="min-w-0 flex-1 pb-4"><div className={`flex items-center justify-between rounded-xl border px-3 py-2.5 ${status === "running" ? "border-blue-100 bg-blue-50/70" : "border-transparent"}`}><span className="text-sm font-medium text-slate-700">{agent}</span><span className="text-[11px] font-semibold capitalize text-slate-400">{status === "pending" ? "queued" : status}</span></div></div></motion.div>; })}</div>;
+}
 
-export default function StatusCard({
-  data,
-  processing,
-  progress,
-  reviewedHeader,
-  reviewedLineItems,
-  liveFieldValidation,
-  approved,
-  onHeaderFieldChange,
-  onLineItemChange,
-  onApprove,
-  onUploadAnother,
-}: Props) {
-  const retryInProgress = progress.some(
-    (event) => (event.agent === "Retry Agent" || event.agent === "Header Retry" || event.agent === "Line Item Retry") && event.status === "running"
-  );
-  const displayAgents = [
-    ...BASE_AGENTS,
-    ...["Retry Agent", "Header Retry", "Line Item Retry"].filter((agent) => progress.some((event) => event.agent === agent)),
-  ];
+export default function StatusCard({ data, processing, progress, reviewedHeader, reviewedLineItems, liveFieldValidation, approved, onHeaderFieldChange, onLineItemChange, onApprove, onUploadAnother }: Props) {
+  const retryInProgress = progress.some((event) => ["Retry Agent", "Header Retry", "Line Item Retry"].includes(event.agent) && event.status === "running");
   const retrySucceeded = Boolean(data?.retry_used && data?.auto_corrected);
   const retryFailed = Boolean(data?.retry_used && !data?.auto_corrected && data?.validation_errors?.length);
 
-  if (processing) {
-    return (
-      <div className="rounded-xl bg-white p-6 shadow">
+  if (processing) return <section className="premium-card rounded-3xl p-5 sm:p-6"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">Live workflow</p><h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">Invoice processing</h2><p className="mt-1 text-sm text-slate-500">Ledger AI is coordinating each extraction and validation stage.</p></div><div className="grid h-11 w-11 place-items-center rounded-2xl bg-indigo-50 text-indigo-600"><Bot size={21} /></div></div><AnimatePresence>{retryInProgress && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-5 overflow-hidden rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800"><p className="font-semibold">Validation failed.</p><p className="mt-1">Ledger AI is automatically retrying extraction…</p></motion.div>}</AnimatePresence><WorkflowTimeline progress={progress} /></section>;
+  if (!data) return <section className="premium-card flex min-h-70 flex-col items-center justify-center rounded-3xl p-8 text-center"><div className="grid h-14 w-14 place-items-center rounded-2xl bg-indigo-50 text-indigo-600"><FileSearch size={25} /></div><h2 className="mt-4 text-lg font-semibold text-slate-900">Ready for an invoice</h2><p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">Upload a document to begin the intelligent extraction workflow.</p></section>;
+  if (data.success === false) return <NotInvoiceCard classification={data.classification} onUploadAnother={onUploadAnother} />;
 
-        <h2 className="mb-6 text-2xl font-semibold">
-          AI Processing Pipeline
-        </h2>
-
-        <AnimatePresence>
-          {retryInProgress && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mb-5 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800"><p className="font-semibold">Validation failed.</p><p>Ledger AI is automatically retrying extraction...</p></motion.div>}
-        </AnimatePresence>
-
-        {displayAgents.map((agent) => {
-
-          const event = [...progress].reverse().find(
-            (p) => p.agent === agent
-          );
-
-          // pending (⬜) is the default when no event has arrived yet for
-          // this agent -- this also covers agents the pipeline never
-          // reached, e.g. everything after Classification on a rejected
-          // document.
-          let icon = "⬜";
-          let labelClasses = "";
-
-          if (event?.status === "running") {
-            icon = "🟡";
-          }
-
-          if (event?.status === "completed") {
-            icon = "✅";
-          }
-
-          if (event?.status === "failed") {
-            icon = "❌";
-            labelClasses = "font-medium text-red-600";
-          }
-
-          return (
-            <div
-              key={agent}
-              className="mb-4 flex items-center gap-3"
-            >
-              <span className="text-2xl">
-                {icon}
-              </span>
-
-              <span className={labelClasses}>{agent}</span>
-            </div>
-          );
-        })}
-
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="rounded-xl bg-white p-6 shadow">
-        Waiting for invoice...
-      </div>
-    );
-  }
-
-  if (data.success === false) {
-    return (
-      <NotInvoiceCard
-        classification={data.classification}
-        onUploadAnother={onUploadAnother}
-      />
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-
-      <AnimatePresence>
-        {retrySucceeded && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800"><p className="font-semibold">Automatic correction successful.</p></motion.div>}
-        {retryFailed && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"><p className="font-semibold">Automatic retry could not resolve all validation issues.</p><p>Human Review is required.</p></motion.div>}
-      </AnimatePresence>
-
-      <HeaderCard
-        header={reviewedHeader ?? data.header}
-        fieldValidation={data.field_validation}
-        liveFieldValidation={liveFieldValidation ?? undefined}
-        onFieldChange={onHeaderFieldChange}
-        locked={approved}
-      />
-
-      <VendorMemoryCard
-        vendorMemory={data.vendor_memory}
-      />
-
-      <ConfidenceCard
-        confidence={data.confidence}
-      />
-
-      <ValidationCard
-        validationErrors={data.validation_errors}
-        fieldValidation={data.field_validation}
-      />
-
-      <LineItemsTable
-        items={reviewedLineItems ?? data.line_items}
-        fieldValidation={data.field_validation}
-        liveFieldValidation={liveFieldValidation ?? undefined}
-        onItemChange={onLineItemChange}
-        locked={approved}
-      />
-
-      <ApprovalPanel
-        fieldValidation={liveFieldValidation}
-        approved={approved}
-        onApprove={onApprove}
-      />
-
-    </div>
-  );
+  return <div className="space-y-5"><AnimatePresence>{retrySucceeded && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800"><CheckCircle2 size={20} /><div><p className="font-semibold">Automatic correction successful.</p><p className="text-sm">Ledger AI resolved the validation issue before review.</p></div></motion.div>}{retryFailed && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-800"><TriangleAlert size={20} /><div><p className="font-semibold">Automatic retry could not resolve all validation issues.</p><p className="text-sm">Human Review is required.</p></div></motion.div>}</AnimatePresence><div className="grid gap-5 xl:grid-cols-2"><HeaderCard header={reviewedHeader ?? data.header} fieldValidation={data.field_validation} liveFieldValidation={liveFieldValidation ?? undefined} onFieldChange={onHeaderFieldChange} locked={approved} /><VendorMemoryCard vendorMemory={data.vendor_memory} /><ConfidenceCard confidence={data.confidence} /><ValidationCard validationErrors={data.validation_errors} fieldValidation={data.field_validation} /></div><LineItemsTable items={reviewedLineItems ?? data.line_items} fieldValidation={data.field_validation} liveFieldValidation={liveFieldValidation ?? undefined} onItemChange={onLineItemChange} locked={approved} /><ApprovalPanel fieldValidation={liveFieldValidation} approved={approved} onApprove={onApprove} /></div>;
 }
