@@ -72,3 +72,7 @@ export async function processInvoice(file: File) {
 
   return response.data;
 }
+
+export async function deleteInvoice(invoiceId: number) {
+  await api.delete(`/invoices/${invoiceId}`);
+}

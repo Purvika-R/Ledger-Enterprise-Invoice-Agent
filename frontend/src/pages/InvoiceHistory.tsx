@@ -1,9 +1,261 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, Search, SlidersHorizontal } from "lucide-react";
+import { Download, Search, SlidersHorizontal,Trash2, } from "lucide-react";
 
 import Header from "../components/layout/Header";
-import { downloadInvoiceExport, getInvoices } from "../services/api";
+import {
+  downloadInvoiceExport,
+  getInvoices,
+  deleteInvoice,
+} from "../services/api";
+
 import type { InvoiceSummary } from "../services/api";
 
-type Props = { onNavigate: (page: "dashboard" | "analytics" | "history") => void; onOpenInvoice: (id: number) => void };
-export default function InvoiceHistory({ onNavigate, onOpenInvoice }: Props) { const [invoices, setInvoices] = useState<InvoiceSummary[]>([]); const [vendor, setVendor] = useState(""); const [currency, setCurrency] = useState(""); const [validation, setValidation] = useState(""); const [search, setSearch] = useState(""); const [sortNewest, setSortNewest] = useState(true); const load = () => getInvoices({ vendor: vendor || undefined, currency: currency || undefined, validation_passed: validation === "" ? undefined : validation === "passed" }).then(setInvoices).catch(console.error); useEffect(() => { load(); }, []); const rows = useMemo(() => invoices.filter((invoice) => `${invoice.invoice_number ?? ""} ${invoice.vendor ?? ""}`.toLowerCase().includes(search.toLowerCase())).sort((a, b) => sortNewest ? b.id - a.id : a.id - b.id), [invoices, search, sortNewest]); return <div className="min-h-screen"><Header activePage="history" onNavigate={onNavigate} /><main className="mx-auto max-w-7xl px-4 py-7 sm:px-7"><div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">Records</p><h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Invoice history</h2><p className="mt-2 text-sm text-slate-500">Search, filter, and review every processed invoice.</p></div><div className="flex gap-2"><button onClick={() => downloadInvoiceExport("csv")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"><Download size={16} />CSV</button><button onClick={() => downloadInvoiceExport("json")} className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3.5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"><Download size={16} />JSON</button></div></div><section className="premium-card rounded-3xl p-4"><div className="grid gap-3 lg:grid-cols-[1.35fr_repeat(3,minmax(0,0.6fr))_auto]"><label className="relative"><Search size={16} className="pointer-events-none absolute left-3 top-3 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search invoice or vendor" className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-indigo-400 focus:bg-white" /></label><input value={vendor} onChange={(event) => setVendor(event.target.value)} placeholder="Vendor" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-indigo-400" /><input value={currency} onChange={(event) => setCurrency(event.target.value)} placeholder="Currency" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-indigo-400" /><select value={validation} onChange={(event) => setValidation(event.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-indigo-400"><option value="">All validation</option><option value="passed">Passed</option><option value="failed">Failed</option></select><button onClick={load} className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"><SlidersHorizontal size={15} />Apply</button></div></section><section className="premium-card mt-5 overflow-hidden rounded-3xl"><div className="overflow-x-auto"><table className="min-w-full text-sm"><thead className="bg-slate-50 text-left text-[11px] font-bold uppercase tracking-[0.11em] text-slate-500"><tr><th className="px-5 py-3">Invoice</th><th className="px-5 py-3">Vendor</th><th className="px-5 py-3">Date</th><th className="px-5 py-3 text-right">Total</th><th className="px-5 py-3">Validation</th><th className="px-5 py-3">Retry</th><th className="px-5 py-3">Approval</th></tr></thead><tbody className="divide-y divide-slate-100">{rows.map((invoice) => <tr key={invoice.id} onClick={() => onOpenInvoice(invoice.id)} className="cursor-pointer transition hover:bg-indigo-50/55"><td className="px-5 py-4 font-semibold text-slate-800">{invoice.invoice_number || (invoice.is_invoice ? "—" : "Non-invoice")}</td><td className="px-5 py-4 text-slate-600">{invoice.vendor || "—"}</td><td className="px-5 py-4 text-slate-600">{invoice.invoice_date || "—"}</td><td className="px-5 py-4 text-right font-medium text-slate-700">{invoice.total_amount ?? "—"} {invoice.currency || ""}</td><td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${invoice.validation_passed ? "bg-emerald-50 text-emerald-700" : invoice.validation_passed === null ? "bg-slate-100 text-slate-500" : "bg-amber-50 text-amber-700"}`}>{invoice.validation_passed === null ? "N/A" : invoice.validation_passed ? "Passed" : "Review"}</span></td><td className="px-5 py-4">{invoice.retry_used ? <span className="text-xs font-bold text-indigo-700">YES{invoice.auto_corrected && " · Fixed"}</span> : <span className="text-xs font-bold text-slate-400">NO</span>}</td><td className="px-5 py-4 capitalize text-slate-600">{invoice.approval_status}</td></tr>)}{!rows.length && <tr><td colSpan={7} className="px-5 py-12 text-center text-slate-500">No invoices match your filters.</td></tr>}</tbody></table></div><div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-xs text-slate-500"><span>{rows.length} invoice{rows.length === 1 ? "" : "s"}</span><button onClick={() => setSortNewest((current) => !current)} className="font-semibold text-indigo-600">Sort {sortNewest ? "newest first" : "oldest first"}</button></div></section></main></div>; }
+type Props = {
+  onNavigate: (page: "dashboard" | "analytics" | "history") => void;
+  onOpenInvoice: (id: number) => void;
+};
+
+export default function InvoiceHistory({ onNavigate, onOpenInvoice }: Props) {
+  const [invoices, setInvoices] = useState<InvoiceSummary[]>([]);
+  const [vendor, setVendor] = useState("");
+  const [currency, setCurrency] = useState("");
+  const [validation, setValidation] = useState("");
+  const [search, setSearch] = useState("");
+  const [sortNewest, setSortNewest] = useState(true);
+
+  const load = () =>
+    getInvoices({
+      vendor: vendor || undefined,
+      currency: currency || undefined,
+      validation_passed:
+        validation === ""
+          ? undefined
+          : validation === "passed",
+    })
+      .then(setInvoices)
+      .catch(console.error);
+
+  const handleDelete = async (
+    event: React.MouseEvent,
+    invoiceId: number
+  ) => {
+    event.stopPropagation();
+
+    if (!window.confirm("Delete this invoice permanently?")) {
+      return;
+    }
+
+    try {
+      await deleteInvoice(invoiceId);
+
+      setInvoices((current) =>
+        current.filter((invoice) => invoice.id !== invoiceId)
+      );
+    } catch (error) {
+      console.error(error);
+      alert("Unable to delete invoice.");
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const rows = useMemo(
+    () =>
+      invoices
+        .filter((invoice) =>
+          `${invoice.invoice_number ?? ""} ${invoice.vendor ?? ""}`
+            .toLowerCase()
+            .includes(search.toLowerCase())
+        )
+        .sort((a, b) => (sortNewest ? b.id - a.id : a.id - b.id)),
+    [invoices, search, sortNewest]
+  );
+
+  return (
+    <div className="min-h-screen">
+      <Header activePage="history" onNavigate={onNavigate} />
+      <main className="mx-auto max-w-7xl px-4 py-7 sm:px-7">
+        <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
+              Records
+            </p>
+            <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">
+              Invoice history
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">
+              Search, filter, and review every processed invoice.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => downloadInvoiceExport("csv")}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              <Download size={16} />
+              CSV
+            </button>
+            <button
+              onClick={() => downloadInvoiceExport("json")}
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3.5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              <Download size={16} />
+              JSON
+            </button>
+          </div>
+        </div>
+
+        <section className="premium-card rounded-3xl p-4">
+          <div className="grid gap-3 lg:grid-cols-[1.35fr_repeat(3,minmax(0,0.6fr))_auto]">
+            <label className="relative">
+              <Search
+                size={16}
+                className="pointer-events-none absolute left-3 top-3 text-slate-400"
+              />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search invoice or vendor"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-indigo-400 focus:bg-white"
+              />
+            </label>
+            <input
+              value={vendor}
+              onChange={(event) => setVendor(event.target.value)}
+              placeholder="Vendor"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-indigo-400"
+            />
+            <input
+              value={currency}
+              onChange={(event) => setCurrency(event.target.value)}
+              placeholder="Currency"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-indigo-400"
+            />
+            <select
+              value={validation}
+              onChange={(event) => setValidation(event.target.value)}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-indigo-400"
+            >
+              <option value="">All validation</option>
+              <option value="passed">Passed</option>
+              <option value="failed">Failed</option>
+            </select>
+            <button
+              onClick={load}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            >
+              <SlidersHorizontal size={15} />
+              Apply
+            </button>
+          </div>
+        </section>
+
+        <section className="premium-card mt-5 overflow-hidden rounded-3xl">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-slate-50 text-left text-[11px] font-bold uppercase tracking-[0.11em] text-slate-500">
+                <tr>
+                  <th className="px-5 py-3">Invoice</th>
+                  <th className="px-5 py-3">Vendor</th>
+                  <th className="px-5 py-3">Date</th>
+                  <th className="px-5 py-3 text-right">Total</th>
+                  <th className="px-5 py-3">Validation</th>
+                  <th className="px-5 py-3">Retry</th>
+                  <th className="px-5 py-3">Approval</th>
+                  <th className="px-5 py-3 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {rows.map((invoice) => (
+                  <tr
+                    key={invoice.id}
+                    onClick={() => onOpenInvoice(invoice.id)}
+                    className="cursor-pointer transition hover:bg-indigo-50/55"
+                  >
+                    <td className="px-5 py-4 font-semibold text-slate-800">
+                      {invoice.invoice_number ||
+                        (invoice.is_invoice ? "—" : "Non-invoice")}
+                    </td>
+                    <td className="px-5 py-4 text-slate-600">
+                      {invoice.vendor || "—"}
+                    </td>
+                    <td className="px-5 py-4 text-slate-600">
+                      {invoice.invoice_date || "—"}
+                    </td>
+                    <td className="px-5 py-4 text-right font-medium text-slate-700">
+                      {invoice.total_amount ?? "—"}{" "}
+                      {invoice.currency || ""}
+                    </td>
+                    <td className="px-5 py-4">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          invoice.validation_passed
+                            ? "bg-emerald-50 text-emerald-700"
+                            : invoice.validation_passed === null
+                            ? "bg-slate-100 text-slate-500"
+                            : "bg-amber-50 text-amber-700"
+                        }`}
+                      >
+                        {invoice.validation_passed === null
+                          ? "N/A"
+                          : invoice.validation_passed
+                          ? "Passed"
+                          : "Review"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      {invoice.retry_used ? (
+                        <span className="text-xs font-bold text-indigo-700">
+                          YES{invoice.auto_corrected && " · Fixed"}
+                        </span>
+                      ) : (
+                        <span className="text-xs font-bold text-slate-400">
+                          NO
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 capitalize text-slate-600">
+                      {invoice.approval_status}
+                    </td>
+                    <td className="px-5 py-4 text-center">
+                      <button
+                            onClick={(event) => handleDelete(event, invoice.id)}
+                            className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
+                            >
+                            <Trash2 size={14} />
+                            Delete
+                        </button>
+                    </td>
+                  </tr>
+                ))}
+                {!rows.length && (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      className="px-5 py-12 text-center text-slate-500"
+                    >
+                      No invoices match your filters.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-xs text-slate-500">
+            <span>
+              {rows.length} invoice{rows.length === 1 ? "" : "s"}
+            </span>
+            <button
+              onClick={() => setSortNewest((current) => !current)}
+              className="font-semibold text-indigo-600"
+            >
+              Sort {sortNewest ? "newest first" : "oldest first"}
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
