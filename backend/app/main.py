@@ -21,6 +21,7 @@ origins = [
     "http://localhost:5173",
     "https://ledger-enterprise-invoice-agent-mf2.vercel.app",
     "https://ledger-enterprise-invoice-agent-mf26-xfvw4m1np-purvika-r.vercel.app",
+    "https://ledger-enterprise-invoice-agent-5xca1pa4a-purvika-r.vercel.app",
 ]
 
 app.add_middleware(
