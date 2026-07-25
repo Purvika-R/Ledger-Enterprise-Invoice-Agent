@@ -1,6 +1,8 @@
-from langchain_ollama import ChatOllama
+import os
+from langchain_groq import ChatGroq
 
-llm = ChatOllama(
-    model="llama3.2:3b",
+llm = ChatGroq(
+    model="llama-3.3-70b-versatile",
     temperature=0,
+    api_key=os.environ["GROQ_API_KEY"],
 )
