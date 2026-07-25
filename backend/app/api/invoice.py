@@ -144,6 +144,8 @@ def approve_invoice(invoice_id: int, db: Session = Depends(get_db), user: User =
 
 @router.delete("/invoices/{invoice_id}", status_code=204)
 def delete_invoice(invoice_id: int, db: Session = Depends(get_db), user: User = Depends(require_roles("admin"))):
-    invoice = get_invoice(db, invoice_id)
-    if invoice is None: raise HTTPException(status_code=404, detail="Invoice not found")
-    db.delete(invoice); db.commit()
+    invoice = get_invoice(db, invoice_id, user)
+    if invoice is None:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    db.delete(invoice)
+    db.commit()
