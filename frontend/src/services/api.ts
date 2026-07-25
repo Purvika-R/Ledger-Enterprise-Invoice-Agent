@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://ledger-enterprise-invoice-agent1.onrender.com",
+  baseURL: "https://ledger-enterprise-invoice-agent-1.onrender.com",
 });
 
 api.interceptors.request.use((config) => {
