@@ -43,27 +43,32 @@ async def process_invoice(file: UploadFile = File(...), user: User = Depends(req
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    result = await run_in_threadpool(
-        graph.invoke,
-        {
-            "image_path": file_path,
-            "ocr_text": "",
-            "classification": {},
-            "header_fields": {},
-            "line_items": [],
-            "vendor_memory": {},
-            "confidence": {},
-            "validation_errors": [],
-            "retry_count": 0,
-            "retry_used": False,
-            "retry_decision": None,
-            "retry_agents": [],
-            "retry_duration_ms": None,
-            "auto_corrected": False,
-            "final_json": {},
-            "audit_trail": [],
-        }
-    )
+    try:
+        result = await run_in_threadpool(
+            graph.invoke,
+            {
+                "image_path": file_path,
+                "ocr_text": "",
+                "classification": {},
+                "header_fields": {},
+                "line_items": [],
+                "vendor_memory": {},
+                "confidence": {},
+                "validation_errors": [],
+                "retry_count": 0,
+                "retry_used": False,
+                "retry_decision": None,
+                "retry_agents": [],
+                "retry_duration_ms": None,
+                "auto_corrected": False,
+                "final_json": {},
+                "audit_trail": [],
+            }
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
     db = SessionLocal()
     try:
